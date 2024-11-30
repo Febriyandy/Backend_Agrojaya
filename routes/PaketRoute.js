@@ -6,7 +6,7 @@ const {
 const router = express.Router();
 
 router.post('/paket', createPaket);
-router.get('/data_paket', getPaket);
-router.get('/data_paket/:id', getPaketById);
+router.get('/pakets', getPaket);
+router.get('/paket/:id', getPaketById);
  
 module.exports = router;

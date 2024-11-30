@@ -6,7 +6,7 @@ const {
 const router = express.Router();
 
 router.post('/artikel', createArtikel);
-router.get('/data_artikel', getArtikel);
-router.get('/data_artikel/:id', getArtikelById);
+router.get('/artikels', getArtikel);
+router.get('/artikel/:id', getArtikelById);
  
 module.exports = router;

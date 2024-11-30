@@ -8,7 +8,8 @@ const FileUpload = require("express-fileupload");
 const UserRoute = require ("./routes/UserRoute.js");
 const PaketRoute = require ("./routes/PaketRoute.js");
 const ArtikelRoute = require ("./routes/ArtikelRoute.js");
-
+const AlamatRoute = require ("./routes/AlamatRoute.js");
+const TransaksiRoute = require ("./routes/TransaksiRoute.js");
 
 dotenv.config();
 const app = express();
@@ -35,6 +36,8 @@ app.use(bodyParser.json());
 app.use(UserRoute);
 app.use(PaketRoute);
 app.use(ArtikelRoute);
+app.use(AlamatRoute);
+app.use(TransaksiRoute);
 
 app.listen(PORT, server_host, () => {
     console.log(`Server up and running on port ${PORT}...`);
