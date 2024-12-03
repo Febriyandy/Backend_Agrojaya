@@ -185,11 +185,15 @@ exports.getAllTransaksi = async (req, res) => {
   }
 };
 
-
 exports.getStatus = async (req, res) => {
   try {
-    const { order_id } = req.params; 
+    const { order_id } = req.params;
     const statusResponse = await snap.transaction.status(order_id);
+
+    // Periksa jika status_code adalah 404
+    if (statusResponse.status_code === '404') {
+      return res.status(201).json({ message: 'Silahkan pilih Metode Pembayaran' });
+    }
 
     let statusDatabase;
     if (statusResponse.transaction_status === 'settlement') {
@@ -221,15 +225,15 @@ exports.getStatus = async (req, res) => {
     await db.promise().execute(query, [statusDatabase, order_id]);
 
     const query1 = `
-    UPDATE transaksi 
-    SET status_transaksi = ? 
-    WHERE order_id = ?
-  `;
-  await db.promise().execute(query1, [statusTransaksi, order_id]);
+      UPDATE transaksi 
+      SET status_transaksi = ? 
+      WHERE order_id = ?
+    `;
+    await db.promise().execute(query1, [statusTransaksi, order_id]);
 
-    res.json(statusResponse);
+    res.status(200).json(statusResponse);
   } catch (error) {
     console.error('Error getting transaction status:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Silahkan Pilih Metode Pembayaran' });
   }
-}
+};
