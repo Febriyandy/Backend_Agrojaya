@@ -44,7 +44,7 @@ exports.createArtikel = async (req, res) => {
 exports.getArtikel = async (req, res) => {
     try {
         const [artikel] = await db.promise().query(`
-            SELECT * FROM artikel`);
+            SELECT * FROM artikel ORDER BY id DESC`);
 
         res.status(200).json(artikel);
     } catch (error) {

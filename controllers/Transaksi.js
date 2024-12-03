@@ -82,7 +82,7 @@ exports.createTransaksi = async (req, res) => {
       total_harga,
       variasi_bibit,
       tanggal, 
-      "Pending",
+      "Menunggu Pembayaran",
       "Pesanan dibuat",
       token.token,
       token.redirect_url,
@@ -110,7 +110,7 @@ exports.createTransaksi = async (req, res) => {
 
 // Get Transaksi By ID
 exports.getTransaksiById = async (req, res) => {
-  const { id } = req.params;
+  const { order_id } = req.params;
 
   try {
       const [transaksi] = await db.promise().query(`
@@ -120,8 +120,8 @@ exports.getTransaksiById = async (req, res) => {
         FROM transaksi t
         JOIN paket p ON t.paket_id = p.id
         JOIN alamat a ON t.alamat_id = a.id
-        WHERE t.id = ?
-      `, [id]);
+        WHERE t.order_id = ?
+      `, [order_id]);
 
       if (transaksi.length === 0) {
           return res.status(404).json({ msg: "Transaksi tidak ditemukan" });
@@ -139,28 +139,30 @@ exports.getTransaksiByUid = async (req, res) => {
   const { uid } = req.params;
 
   try {
-      const [transaksi] = await db.promise().query(`
-        SELECT t.*, p.nama_paket, p.photo AS photo_paket, 
-               a.nama AS nama_alamat, a.noHp, a.provinsi, a.kabupaten, 
-               a.kecamatan, a.kelurahan, a.alamatLengkap, a.catatan 
-        FROM transaksi t
-        JOIN paket p ON t.paket_id = p.id
-        JOIN alamat a ON t.alamat_id = a.id
-        WHERE t.uid = ?
-      `, [uid]);
+    const [transaksi] = await db.promise().query(`
+      SELECT t.*, p.nama_paket, p.photo AS photo_paket, 
+             a.nama AS nama_alamat, a.noHp, a.provinsi, a.kabupaten, 
+             a.kecamatan, a.kelurahan, a.alamatLengkap, a.catatan 
+      FROM transaksi t
+      JOIN paket p ON t.paket_id = p.id
+      JOIN alamat a ON t.alamat_id = a.id
+      WHERE t.uid = ?
+      ORDER BY t.id DESC 
+    `, [uid]);
 
-      if (transaksi.length === 0) {
-          // Berikan respon 201 dengan JSON kosong
-          return res.status(201).json([]);
-      }
+    if (transaksi.length === 0) {
+      // Berikan respon 201 dengan JSON kosong
+      return res.status(201).json([]);
+    }
 
-      // Jika transaksi ditemukan, kembalikan data transaksi
-      res.status(200).json(transaksi);
+    // Jika transaksi ditemukan, kembalikan data transaksi
+    res.status(200).json(transaksi);
   } catch (error) {
-      console.error("Error in getTransaksiByUid:", error);
-      res.status(500).json({ msg: "Gagal mengambil data transaksi", error: error.message });
+    console.error("Error in getTransaksiByUid:", error);
+    res.status(500).json({ msg: "Gagal mengambil data transaksi", error: error.message });
   }
 };
+
 
 
 // Get All Transaksi
@@ -173,6 +175,7 @@ exports.getAllTransaksi = async (req, res) => {
         FROM transaksi t
         JOIN paket p ON t.paket_id = p.id
         JOIN alamat a ON t.alamat_id = a.id
+        ORDER BY t.id DESC
       `);
 
       res.status(200).json(transaksi);
@@ -190,13 +193,24 @@ exports.getStatus = async (req, res) => {
 
     let statusDatabase;
     if (statusResponse.transaction_status === 'settlement') {
-      statusDatabase = 'Sukses';
+      statusDatabase = 'Pembayaran Sukses';
     } else if (statusResponse.transaction_status === 'pending') {
-      statusDatabase = 'Pending';
+      statusDatabase = 'Menunggu Pembayaran';
     } else if (statusResponse.transaction_status === 'cancel') {
-      statusDatabase = 'Gagal';
+      statusDatabase = 'Pembayaran Gagal';
     } else {
       statusDatabase = 'lainnya';
+    }
+
+    let statusTransaksi;
+    if (statusResponse.transaction_status === 'settlement') {
+      statusTransaksi = 'Pesanan Dibuat';
+    } else if (statusResponse.transaction_status === 'pending') {
+      statusTransaksi = 'Menunggu Pembayaran';
+    } else if (statusResponse.transaction_status === 'cancel') {
+      statusTransaksi = 'Pembayaran Gagal';
+    } else {
+      statusTransaksi = 'lainnya';
     }
 
     const query = `
@@ -205,6 +219,13 @@ exports.getStatus = async (req, res) => {
       WHERE order_id = ?
     `;
     await db.promise().execute(query, [statusDatabase, order_id]);
+
+    const query1 = `
+    UPDATE transaksi 
+    SET status_transaksi = ? 
+    WHERE order_id = ?
+  `;
+  await db.promise().execute(query1, [statusTransaksi, order_id]);
 
     res.json(statusResponse);
   } catch (error) {

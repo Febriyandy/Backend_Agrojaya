@@ -52,7 +52,7 @@ exports.getAlamatByUid = async (req, res) => {
     const { uid } = req.params;
 
     try {
-        const [alamat] = await db.promise().query(`SELECT * FROM alamat WHERE uid = ?`, [uid]);
+        const [alamat] = await db.promise().query(`SELECT * FROM alamat WHERE uid = ? ORDER BY id DESC`, [uid]);
 
         if (alamat.length === 0) {
             // Berikan respon 201 dengan JSON kosong
@@ -71,7 +71,7 @@ exports.getAlamatByUid = async (req, res) => {
 // Get All Alamat
 exports.getAllAlamat = async (req, res) => {
     try {
-        const [alamat] = await db.promise().query(`SELECT * FROM alamat`);
+        const [alamat] = await db.promise().query(`SELECT * FROM alamat ORDER BY id DESC`);
 
         res.status(200).json(alamat);
     } catch (error) {
